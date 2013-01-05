@@ -99,7 +99,7 @@ def p_empty(p):
     pass
 
 def p_error(p):
-    print 'Syntax error in input at {!r}'.format(p)
+    print('Syntax error in input at {!r}'.format(p))
 
 # Create parser
 
@@ -109,4 +109,4 @@ yacc.yacc()
 
 with open('example.cl', 'r') as source:
     t = yacc.parse(source.read())
-print t
+print(t)

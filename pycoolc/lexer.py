@@ -80,4 +80,4 @@ while True:
     token = lex.token()
     if token is None:
         break
-    print token
+    print(token)
