@@ -1,5 +1,5 @@
 import ply.yacc as yacc
-import lexer
+from . import lexer
 tokens = lexer.tokens
 
 # Grammar definitions in BNF form
@@ -101,12 +101,30 @@ def p_empty(p):
 def p_error(p):
     print('Syntax error in input at {!r}'.format(p))
 
-# Create parser
 
+# Create parser
 yacc.yacc()
 
-# Parse source file
 
-with open('example.cl', 'r') as source:
-    t = yacc.parse(source.read())
-print(t)
+if __name__ == '__main__':
+
+    # Get file as argument
+
+    import sys
+    if len(sys.argv) != 2:
+        print('You need to specify a cool source file to read from.', file=sys.stderr)
+        sys.exit(1)
+    if not sys.argv[1].endswith('.cl'):
+        print('Argument needs to be a cool source file ending on ".cl".', file=sys.stderr)
+        sys.exit(1)
+
+    sourcefile = sys.argv[1]
+
+    # Read and parse source file
+
+    with open(sourcefile, 'r') as source:
+        t = yacc.parse(source.read())
+
+    # Print AST
+
+    print(t)
