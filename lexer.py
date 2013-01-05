@@ -50,11 +50,7 @@ def t_STRING(t):
 
 def t_COMMENT(t):
     r'--[^\n]+\n|\(\*[^(\*\))]+\*\)'
-    if t.value.startswith('--'):
-        t.value = t.value.strip('\n').strip('--')
-    elif t.value.startswith('(*'):
-        t.value = t.value[2:-2]
-    return t
+    pass  # Discard comments
 
 
 # Create lexer
