@@ -48,7 +48,7 @@ def t_TYPE(t):
 
 def t_ID(t):
     r'[a-z][A-Za-z0-9_]*'
-    t.type = reserved.get(t.value, 'ID')
+    t.type = reserved.get(t.value.lower(), 'ID')
     return t
 
 # Operators
@@ -83,7 +83,6 @@ def t_BOOL(t):
 def t_COMMENT(t):
     r'--[^\n]+\n|\(\*[^(\*\))]+\*\)'
     pass  # Discard comments
-
 
 
 ###### SPECIAL RULES ######
