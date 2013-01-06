@@ -1,28 +1,57 @@
 import ply.lex as lex
 
-tokens = [
-    'TYPE', 'ID',
 
-    'INTEGER', 'STRING', 'BOOL',
-
-    'ASSIGN',
-    'LESS', 'LESSEQUAL', 'EQUAL',
-    'INT_COMPLEMENT', 'NOT',
-
-    'CLASS', 'INHERITS',
-    'IF', 'THEN', 'ELSE', 'FI',
-    'WHILE', 'LOOP', 'POOL',
-    'LET', 'IN',
-    'CASE', 'OF', 'ACTION', 'ESAC',
-    'NEW',
-    'ISVOID']
+###### TOKEN LISTS ######
 
 literals = ['+', '-', '*', '/', ':', ';', '(', ')', '{', '}', '@', '.']
 
-t_ignore = ' \n\f\r\t\v'
+reserved = {
+    'class': 'CLASS',
+    'inherits': 'INHERITS',
+    'if': 'IF',
+    'then': 'THEN',
+    'else': 'ELSE',
+    'fi': 'FI',
+    'while': 'WHILE',
+    'loop': 'LOOP',
+    'pool': 'POOL',
+    'let': 'LET',
+    'in': 'IN',
+    'case': 'CASE',
+    'of': 'OF',
+    'esac': 'ESAC',
+    'new': 'NEW',
+    'isvoid': 'ISVOID',
+}
 
-t_TYPE = r'[A-Z][A-Za-z0-9_]*'
-t_ID = r'[a-z][A-Za-z0-9_]*'
+ignored = [' ', '\n', '\f', '\r', '\t', '\v']
+
+tokens = [
+    # Identifiers
+    'TYPE', 'ID',
+    # Primitive data types
+    'INTEGER', 'STRING', 'BOOL',
+    # Special keywords
+    'ACTION',
+    # Operators
+    'ASSIGN', 'LESS', 'LESSEQUAL', 'EQUAL', 'INT_COMPLEMENT', 'NOT',
+] + list(reserved.values())
+
+
+###### TOKEN RULES ######
+
+# Identifiers
+
+def t_TYPE(t):
+    r'[A-Z][A-Za-z0-9_]*'
+    return t
+
+def t_ID(t):
+    r'[a-z][A-Za-z0-9_]*'
+    t.type = reserved.get(t.value, 'ID')
+    return t
+
+# Operators
 
 t_ASSIGN = r'<-'
 t_LESS = r'<'
@@ -31,23 +60,11 @@ t_EQUAL = r'='
 t_INT_COMPLEMENT = r'~'
 t_NOT = r'[nN][oO][tT]'
 
-t_CLASS = r'class'
-t_INHERITS = r'inherits'
-t_IF = r'if'
-t_THEN = r'then'
-t_ELSE = r'else'
-t_FI = r'fi'
-t_WHILE = r'while'
-t_LOOP = r'loop'
-t_POOL = r'pool'
-t_LET = r'let'
-t_IN = r'in'
-t_CASE = r'case'
-t_OF = r'of'
+# Special keywords
+
 t_ACTION = r'=>'
-t_ESAC = r'esac'
-t_NEW = r'new'
-t_ISVOID = r'isvoid'
+
+# Primitive data types
 
 def t_INTEGER(t):
     r'[0-9]+'
@@ -68,9 +85,22 @@ def t_COMMENT(t):
     pass  # Discard comments
 
 
-# Create lexer
+
+###### SPECIAL RULES ######
+
+def t_error(t):
+    print("Illegal character '{}'".format(t.value[0]))
+    t.lexer.skip(1)
+
+t_ignore = ''.join(ignored)
+
+
+###### CREATE LEXER ######
+
 lex.lex()
 
+
+###### PROCESS INPUT ######
 
 if __name__ == '__main__':
 
