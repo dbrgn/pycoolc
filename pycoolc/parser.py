@@ -5,13 +5,13 @@ tokens = lexer.tokens
 
 # AST namedtuples
 
-Class = namedtuple('Class', 'name inherits features')
-Method = namedtuple('Method', 'name type formals expr')
+Type = namedtuple('Type', 'name inherits features')
+Method = namedtuple('Method', 'name type params expr')
 Block = namedtuple('Block', 'elements')
-VariableCreation = namedtuple('VariableCreation', 'name type expr')
+Attribute = namedtuple('Attribute', 'name type expr')
 Let = namedtuple('Let', 'variables expr')
 Assignment = namedtuple('Assignment', 'name expr')
-Formal = namedtuple('Formal', 'name type')
+Param = namedtuple('Param', 'name type')
 New = namedtuple('New', 'type')
 MethodCall = namedtuple('MethodCall', 'object method params')
 
@@ -33,7 +33,7 @@ def p_classes(p):
 
 def p_class(p):
     """class : CLASS TYPE inheritance '{' features_opt '}' ';'"""
-    p[0] = Class(name=p[2], inherits=p[3], features=p[5])
+    p[0] = Type(name=p[2], inherits=p[3], features=p[5])
 
 def p_inheritance(p):
     """inheritance : INHERITS TYPE
@@ -64,10 +64,10 @@ def p_features(p):
         raise SyntaxError('Invalid number of symbols')
     
 def p_feature(p):
-    """feature : ID '(' formals_opt ')' ':' TYPE '{' expr '}' ';'
+    """feature : ID '(' params_opt ')' ':' TYPE '{' expr '}' ';'
                | attr_def ';'"""
     if len(p) == 11:
-        p[0] = Method(name=p[1], type=p[6], formals=p[3], expr=p[8])
+        p[0] = Method(name=p[1], type=p[6], params=p[3], expr=p[8])
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -85,7 +85,7 @@ def p_attr_defs(p):
 
 def p_attr_def(p):
     """attr_def : ID ':' TYPE assign_opt"""
-    p[0] = VariableCreation(name=p[1], type=p[3], expr=p[4])
+    p[0] = Attribute(name=p[1], type=p[3], expr=p[4])
 
 def p_assign_opt(p):
     """assign_opt : assign
@@ -96,25 +96,25 @@ def p_assign(p):
     """assign : ASSIGN expr"""
     p[0] = p[2]
 
-def p_formals_opt(p):
-    """formals_opt : formals
+def p_params_opt(p):
+    """params_opt : params
                    | empty"""
     if p.slice[1].type == 'empty':
         p[0] = tuple()
     else:
         p[0] = p[1]
 
-def p_formals(p):
-    """formals : formal
-               | formal ',' formals"""
+def p_params(p):
+    """params : param
+              | param ',' params"""
     if len(p) == 2:
         p[0] = (p[1],)
     elif len(p) == 4:
         p[0] = (p[1],) + p[3]
 
-def p_formal(p):
-    """formal : ID ':' TYPE"""
-    p[0] = Formal(name=p[1], type=p[3]) 
+def p_param(p):
+    """param : ID ':' TYPE"""
+    p[0] = Param(name=p[1], type=p[3])
 
 def p_expr(p):
     """expr : ID assign
