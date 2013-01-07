@@ -17,6 +17,18 @@ MethodCall = namedtuple('MethodCall', 'object method params')
 
 # Grammar definitions in BNF form
 
+precedence = (
+    ('right', 'ASSIGN'),
+    ('right', 'NOT'),
+    ('nonassoc', 'LESSEQUAL', 'LESS', 'EQUAL'),
+    ('left', '+', '-'),
+    ('left', '*', '/'),
+    ('right', 'ISVOID'),
+    ('right', 'INT_COMPLEMENT'),
+    #('right', '@'),
+    ('left', '.'),
+)
+
 def p_program(p):
     """program : classes"""
     p[0] = p[1]
@@ -121,6 +133,10 @@ def p_expr(p):
             | expr '.' ID '(' params_opt ')'
             | LET ID ':' TYPE assign_opt attr_defs IN expr
             | NEW TYPE
+            | expr '+' expr
+            | expr '-' expr
+            | expr '*' expr
+            | expr '/' expr
             | '{' block '}'
             | '(' expr ')'
             | ID
@@ -137,6 +153,14 @@ def p_expr(p):
     elif first_token == 'expr':
         if second_token == '.':
             p[0] = MethodCall(object=p[1], method=p[3], params=p[5])
+        elif second_token == '+':
+            p[0] = p[1] + p[3]
+        elif second_token == '-':
+            p[0] = p[1] - p[3]
+        elif second_token == '*':
+            p[0] = p[1] * p[3]
+        elif second_token == '/':
+            p[0] = p[1] / p[3]
     elif first_token == 'LET':
         p[0] = Let(variables=p[6], expr=p[8])
     elif first_token == 'NEW':
@@ -156,10 +180,10 @@ def p_expr(p):
 #            | CASE expr OF typeactions ESAC
 #            # NEW TYPE
 #            | ISVOID expr
-#            | expr '+' expr
-#            | expr '-' expr
-#            | expr '*' expr
-#            | expr '/' expr
+#            # expr '+' expr
+#            # expr '-' expr
+#            # expr '*' expr
+#            # expr '/' expr
 #            | INT_COMPLEMENT expr
 #            | expr LESS expr
 #            | expr LESSEQUAL expr
