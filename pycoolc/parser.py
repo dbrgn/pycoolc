@@ -10,10 +10,13 @@ Method = namedtuple('Method', 'name type params expr')
 Block = namedtuple('Block', 'elements')
 Attribute = namedtuple('Attribute', 'name type expr')
 Let = namedtuple('Let', 'variables expr')
+If = namedtuple('If', 'condition true false')
 Assignment = namedtuple('Assignment', 'name expr')
 Param = namedtuple('Param', 'name type')
 New = namedtuple('New', 'type')
 MethodCall = namedtuple('MethodCall', 'object method params')
+BinaryOperation = namedtuple('BinaryOperation', 'operator left right')
+UnaryOperation = namedtuple('UnaryOperation', 'operator right')
 
 # Grammar definitions in BNF form
 
@@ -131,12 +134,16 @@ def p_param(p):
 def p_expr(p):
     """expr : ID assign
             | expr '.' ID '(' params_opt ')'
+            | IF expr THEN expr ELSE expr FI
             | LET ID ':' TYPE assign_opt attr_defs IN expr
             | NEW TYPE
             | expr '+' expr
             | expr '-' expr
             | expr '*' expr
             | expr '/' expr
+            | expr LESS expr
+            | expr LESSEQUAL expr
+            | expr EQUAL expr
             | '{' block '}'
             | '(' expr ')'
             | ID
@@ -144,6 +151,7 @@ def p_expr(p):
     """
     first_token = p.slice[1].type
     second_token = p.slice[2].type if len(p) > 2 else None
+    third_token = p.slice[3].type if len(p) > 3 else None
 
     if first_token == 'ID':
         if second_token is None:
@@ -151,20 +159,18 @@ def p_expr(p):
         elif second_token == 'assign':
             p[0] = Assignment(name=p[1], expr=p[2])
     elif first_token == 'expr':
-        if second_token == '.':
+        if len(p) == 4 and third_token == 'expr':
+            p[0] = BinaryOperation(operator=p[2], left=p[1], right=p[3])
+        elif second_token == '.':
             p[0] = MethodCall(object=p[1], method=p[3], params=p[5])
-        elif second_token == '+':
-            p[0] = p[1] + p[3]
-        elif second_token == '-':
-            p[0] = p[1] - p[3]
-        elif second_token == '*':
-            p[0] = p[1] * p[3]
-        elif second_token == '/':
-            p[0] = p[1] / p[3]
+    elif first_token == 'IF':
+        p[0] = If(condition=p[2], true=p[4], false=p[6])
     elif first_token == 'LET':
         p[0] = Let(variables=p[6], expr=p[8])
     elif first_token == 'NEW':
         p[0] = New(type=p[2])
+    elif first_token in ['ISVOID', 'INT_COMPLEMENT', 'NOT']:
+        p[0] = UnaryOperation(operator=p[1], right=p[2])
     elif first_token in ['{', '(']:
         p[0] = p[2]
     elif first_token in ['INTEGER', 'STRING', 'BOOL']:
@@ -173,22 +179,22 @@ def p_expr(p):
 #    """expr # ID assign
 #            # expr '.' ID '(' params_opt ')'
 #            | ID '(' params_opt ')'
-#            | IF expr THEN expr ELSE expr FI
+#            # IF expr THEN expr ELSE expr FI
 #            | WHILE expr LOOP expr POOL
-#            | '{' block '}'
+#            # '{' block '}'
 #            # LET ID ':' TYPE assign_opt attr_defs IN expr
 #            | CASE expr OF typeactions ESAC
 #            # NEW TYPE
-#            | ISVOID expr
+#            # ISVOID expr
 #            # expr '+' expr
 #            # expr '-' expr
 #            # expr '*' expr
 #            # expr '/' expr
-#            | INT_COMPLEMENT expr
-#            | expr LESS expr
-#            | expr LESSEQUAL expr
-#            | expr EQUAL expr
-#            | NOT expr
+#            # INT_COMPLEMENT expr
+#            # expr LESS expr
+#            # expr LESSEQUAL expr
+#            # expr EQUAL expr
+#            # NOT expr
 #            # '(' expr ')'
 #            # ID
 #            # INTEGER

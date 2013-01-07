@@ -22,7 +22,7 @@ AST
 ---
 
 The abstract syntax tree is composed of ``tuple``\ s and ``namedtuple``\ s.  As
-an example, parsing ``example/compley.cl`` currently results in code like this:
+an example, parsing ``example/complex2.cl`` currently results in code like this:
 
 .. sourcecode:: python
 
@@ -59,6 +59,36 @@ an example, parsing ``example/compley.cl`` currently results in code like this:
                         ),
                         method='copy',
                         params=()
+                    )
+                ),
+                Attribute(
+                    name='y',
+                    type='Int',
+                    expr=BinaryOperation(
+                        operator='-',
+                        left=12,
+                        right=9
+                    )
+                ),
+                Attribute(
+                    name='z',
+                    type='Int',
+                    expr=If(
+                        condition=BinaryOperation(
+                            operator='<=',
+                            left='y',
+                            right=42
+                        ),
+                        true=BinaryOperation(
+                            operator='+',
+                            left=BinaryOperation(
+                                operator='*',
+                                left=5,
+                                right=3
+                            ),
+                            right=2
+                        ),
+                        false=0
                     )
                 ),
                 Method(
