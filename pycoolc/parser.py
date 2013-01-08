@@ -79,7 +79,7 @@ def p_features(p):
         p[0] = (p[1],) + p[2]
     else:
         raise SyntaxError('Invalid number of symbols')
-    
+
 def p_feature(p):
     """feature : ID '(' formals_opt ')' ':' TYPE '{' expr '}' ';'
                | attr_def ';'"""
@@ -176,7 +176,7 @@ def p_typeactions(p):
         p[0] = (p[1],) + p[2]
     else:
         raise SyntaxError('Invalid number of symbols')
-                   
+
 def p_typeaction(p):
     """typeaction : ID ':' TYPE ACTION expr ';'"""
     p[0] = Case(name=p[1], type=p[3], action=p[5])
@@ -271,4 +271,41 @@ if __name__ == '__main__':
 
     # Print AST
 
-    pprint(t)
+    def indent(string, level=1, lstrip_first=False):
+        """Multiline-indent the provided string by the specified level."""
+        out = '\n'.join((level * '  ') + i for i in string.splitlines())
+        if lstrip_first:
+            return out.lstrip()
+        return out
+
+    def is_tuple(x):
+        """Return whether ``x`` is an instance of a tuple."""
+        return isinstance(x, tuple)
+
+    def is_namedtuple(x):
+        """Return whether ``x`` is an instance of a namedtuple."""
+        return is_tuple(x) and hasattr(x, '_fields')
+
+    def ast_print(tree, level=0, inline=False):
+        """Recursive function to print the AST."""
+
+        if is_namedtuple(tree):
+            print(indent('{0.__class__.__name__}('.format(tree), level, inline))
+            for key, value in tree._asdict().items():
+                print(indent(key + '=', level + 1), end='')
+                ast_print(value, level + 1, True)
+            print(indent(')', level))
+
+        elif is_tuple(tree):
+            if len(tree) == 0:
+                print('()')
+            else:
+                print(indent('(', level, inline))
+                for obj in tree:
+                    ast_print(obj, level + 1)
+                print(indent(')', level))
+
+        else:
+            print(indent(repr(tree), level, inline))
+
+    ast_print(t)

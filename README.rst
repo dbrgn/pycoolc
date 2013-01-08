@@ -22,83 +22,82 @@ AST
 ---
 
 The abstract syntax tree is composed of ``tuple``\ s and ``namedtuple``\ s.  As
-an example, parsing ``example/complex2.cl`` currently results in code like this:
+an example, parsing ``example/complex2.cl`` currently results in an AST like
+this:
 
 .. sourcecode:: python
 
     (
-        Type(
-            name='Silly',
-            inherits=None,
-            features=(
-                Method(
-                    name='copy',
-                    type='SELF_TYPE',
-                    formals=(),
-                    expr='self'
-                ),
-            )
-        ),
-
-        Type(
-            name='Sally',
-            inherits='Silly',
-            features=()
-        ),
-
-        Type(
-            name='Main',
-            inherits=None,
-            features=(
-                Attribute(
-                    name='x',
-                    type='Sally',
-                    expr=MethodCall(
-                        object=New(
-                            type='Sally'
-                        ),
-                        method='copy',
-                        params=()
-                    )
-                ),
-                Attribute(
-                    name='y',
-                    type='Int',
-                    expr=BinaryOperation(
-                        operator='-',
-                        left=12,
-                        right=9
-                    )
-                ),
-                Attribute(
-                    name='z',
-                    type='Int',
-                    expr=If(
-                        condition=BinaryOperation(
-                            operator='<=',
-                            left='y',
-                            right=42
-                        ),
-                        true=BinaryOperation(
-                            operator='+',
-                            left=BinaryOperation(
-                                operator='*',
-                                left=5,
-                                right=3
-                            ),
-                            right=2
-                        ),
-                        false=0
-                    )
-                ),
-                Method(
-                    name='main',
-                    type='Sally',
-                    formals=(),
-                    expr='x'
-                )
-            )
+      Type(
+        name='Silly'
+        inherits=None
+        features=(
+          Method(
+            name='copy'
+            type='SELF_TYPE'
+            formals=()
+            expr='self'
+          )
         )
+      )
+      Type(
+        name='Sally'
+        inherits='Silly'
+        features=()
+      )
+      Type(
+        name='Main'
+        inherits=None
+        features=(
+          Attribute(
+            name='x'
+            type='Sally'
+            expr=MethodCall(
+              object=New(
+                type='Sally'
+              )
+              method='copy'
+              params=()
+            )
+          )
+          Attribute(
+            name='y'
+            type='Int'
+            expr=BinaryOperation(
+              operator='-'
+              left=12
+              right=9
+            )
+          )
+          Attribute(
+            name='z'
+            type='Int'
+            expr=If(
+              condition=BinaryOperation(
+                operator='<='
+                left='y'
+                right=42
+              )
+              true=BinaryOperation(
+                operator='+'
+                left=BinaryOperation(
+                  operator='*'
+                  left=5
+                  right=3
+                )
+                right=2
+              )
+              false=0
+            )
+          )
+          Method(
+            name='main'
+            type='Sally'
+            formals=()
+            expr='x'
+          )
+        )
+      )
     )
 
 .. _cool: http://theory.stanford.edu/~aiken/software/cool/cool.html
