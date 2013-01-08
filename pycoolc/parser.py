@@ -6,15 +6,17 @@ tokens = lexer.tokens
 # AST namedtuples
 
 Type = namedtuple('Type', 'name inherits features')
-Method = namedtuple('Method', 'name type params expr')
+Method = namedtuple('Method', 'name type formals expr')
 Block = namedtuple('Block', 'elements')
 Attribute = namedtuple('Attribute', 'name type expr')
-Let = namedtuple('Let', 'variables expr')
+Let = namedtuple('Let', 'assignments expr')
 If = namedtuple('If', 'condition true false')
+Case = namedtuple('Case', 'name type action')
 Assignment = namedtuple('Assignment', 'name expr')
-Param = namedtuple('Param', 'name type')
+Formal = namedtuple('Formal', 'name type')
 New = namedtuple('New', 'type')
 MethodCall = namedtuple('MethodCall', 'object method params')
+FunctionCall = namedtuple('FunctionCall', 'function params')
 BinaryOperation = namedtuple('BinaryOperation', 'operator left right')
 UnaryOperation = namedtuple('UnaryOperation', 'operator right')
 
@@ -79,10 +81,10 @@ def p_features(p):
         raise SyntaxError('Invalid number of symbols')
     
 def p_feature(p):
-    """feature : ID '(' params_opt ')' ':' TYPE '{' expr '}' ';'
+    """feature : ID '(' formals_opt ')' ':' TYPE '{' expr '}' ';'
                | attr_def ';'"""
     if len(p) == 11:
-        p[0] = Method(name=p[1], type=p[6], params=p[3], expr=p[8])
+        p[0] = Method(name=p[1], type=p[6], formals=p[3], expr=p[8])
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -111,107 +113,27 @@ def p_assign(p):
     """assign : ASSIGN expr"""
     p[0] = p[2]
 
-def p_params_opt(p):
-    """params_opt : params
+def p_formals_opt(p):
+    """formals_opt : formals
                    | empty"""
     if p.slice[1].type == 'empty':
         p[0] = tuple()
     else:
         p[0] = p[1]
 
-def p_params(p):
-    """params : param
-              | param ',' params"""
+def p_formals(p):
+    """formals : formal
+               | formal ',' formals"""
     if len(p) == 2:
         p[0] = (p[1],)
     elif len(p) == 4:
         p[0] = (p[1],) + p[3]
+    else:
+        raise SyntaxError('Invalid number of symbols')
 
-def p_param(p):
-    """param : ID ':' TYPE"""
-    p[0] = Param(name=p[1], type=p[3])
-
-def p_expr(p):
-    """expr : ID assign
-            | expr '.' ID '(' params_opt ')'
-            | IF expr THEN expr ELSE expr FI
-            | LET ID ':' TYPE assign_opt attr_defs IN expr
-            | NEW TYPE
-            | expr '+' expr
-            | expr '-' expr
-            | expr '*' expr
-            | expr '/' expr
-            | expr LESS expr
-            | expr LESSEQUAL expr
-            | expr EQUAL expr
-            | '{' block '}'
-            | '(' expr ')'
-            | ID
-            | INTEGER
-    """
-    first_token = p.slice[1].type
-    second_token = p.slice[2].type if len(p) > 2 else None
-    third_token = p.slice[3].type if len(p) > 3 else None
-
-    if first_token == 'ID':
-        if second_token is None:
-            p[0] = p[1]
-        elif second_token == 'assign':
-            p[0] = Assignment(name=p[1], expr=p[2])
-    elif first_token == 'expr':
-        if len(p) == 4 and third_token == 'expr':
-            p[0] = BinaryOperation(operator=p[2], left=p[1], right=p[3])
-        elif second_token == '.':
-            p[0] = MethodCall(object=p[1], method=p[3], params=p[5])
-    elif first_token == 'IF':
-        p[0] = If(condition=p[2], true=p[4], false=p[6])
-    elif first_token == 'LET':
-        p[0] = Let(variables=p[6], expr=p[8])
-    elif first_token == 'NEW':
-        p[0] = New(type=p[2])
-    elif first_token in ['ISVOID', 'INT_COMPLEMENT', 'NOT']:
-        p[0] = UnaryOperation(operator=p[1], right=p[2])
-    elif first_token in ['{', '(']:
-        p[0] = p[2]
-    elif first_token in ['INTEGER', 'STRING', 'BOOL']:
-        p[0] = p[1]
-
-#    """expr # ID assign
-#            # expr '.' ID '(' params_opt ')'
-#            | ID '(' params_opt ')'
-#            # IF expr THEN expr ELSE expr FI
-#            | WHILE expr LOOP expr POOL
-#            # '{' block '}'
-#            # LET ID ':' TYPE assign_opt attr_defs IN expr
-#            | CASE expr OF typeactions ESAC
-#            # NEW TYPE
-#            # ISVOID expr
-#            # expr '+' expr
-#            # expr '-' expr
-#            # expr '*' expr
-#            # expr '/' expr
-#            # INT_COMPLEMENT expr
-#            # expr LESS expr
-#            # expr LESSEQUAL expr
-#            # expr EQUAL expr
-#            # NOT expr
-#            # '(' expr ')'
-#            # ID
-#            # INTEGER
-#            # STRING
-#            # BOOL"""
-#    if len(p) == 2:
-#        p[0] = p[1]
-#    elif len(p) == 4:
-#        if p[2] == '+':
-#            p[0] = p[1] + p[3]
-#        if p[2] == '-':
-#            p[0] = p[1] - p[3]
-#        if p[2] == '*':
-#            p[0] = p[1] * p[3]
-#        if p[2] == '/':
-#            p[0] = p[1] / p[3]
-
+def p_formal(p):
+    """formal : ID ':' TYPE"""
+    p[0] = Formal(name=p[1], type=p[3])
 
 def p_params_opt(p):
     """params_opt : params
@@ -225,9 +147,9 @@ def p_params(p):
     """params : expr
               | expr ',' params"""
     if len(p) == 2:
-        p[0] = (p[2],)
+        p[0] = (p[1],)
     elif len(p) == 4:
-        p[0] = (p[2],) + p[4]
+        p[0] = (p[1],) + p[3]
     else:
         raise SyntaxError('Invalid number of symbols')
 
@@ -245,12 +167,75 @@ def p_blockelements(p):
     else:
         raise SyntaxError('Invalid number of symbols')
 
-#def p_typeactions(p):
-#    """typeactions : typeaction
-#                   | typeaction typeactions"""
+def p_typeactions(p):
+    """typeactions : typeaction
+                   | typeaction typeactions"""
+    if len(p) == 2:
+        p[0] == (p[1],)
+    elif len(p) == 3:
+        p[0] = (p[1],) + p[2]
+    else:
+        raise SyntaxError('Invalid number of symbols')
                    
-#def p_typeaction(p):
-#    """typeaction : ID ':' TYPE ACTION expr ';'"""
+def p_typeaction(p):
+    """typeaction : ID ':' TYPE ACTION expr ';'"""
+    p[0] = Case(name=p[1], type=p[3], action=p[5])
+
+def p_expr(p):
+    """expr : ID assign
+            | expr '.' ID '(' params_opt ')'
+            | ID '(' params_opt ')'
+            | IF expr THEN expr ELSE expr FI
+            | WHILE expr LOOP expr POOL
+            | LET attr_defs IN expr
+            | CASE expr OF typeactions ESAC
+            | NEW TYPE
+            | INT_COMPLEMENT expr
+            | NOT expr
+            | ISVOID expr
+            | expr '+' expr
+            | expr '-' expr
+            | expr '*' expr
+            | expr '/' expr
+            | expr LESS expr
+            | expr LESSEQUAL expr
+            | expr EQUAL expr
+            | '{' block '}'
+            | '(' expr ')'
+            | ID
+            | INTEGER
+            | STRING
+            | BOOL
+    """
+    # todo LET and second expr
+    first_token = p.slice[1].type
+    second_token = p.slice[2].type if len(p) > 2 else None
+    third_token = p.slice[3].type if len(p) > 3 else None
+
+    if first_token == 'ID':
+        if second_token is None:
+            p[0] = p[1]
+        elif second_token == '(':
+            p[0] = FunctionCall(function=p[1], params=p[3])
+        elif second_token == 'assign':
+            p[0] = Assignment(name=p[1], expr=p[2])
+    elif first_token == 'expr':
+        if len(p) == 4 and third_token == 'expr':
+            p[0] = BinaryOperation(operator=p[2], left=p[1], right=p[3])
+        elif second_token == '.':
+            p[0] = MethodCall(object=p[1], method=p[3], params=p[5])
+    elif first_token == 'IF':
+        p[0] = If(condition=p[2], true=p[4], false=p[6])
+    elif first_token == 'LET':
+        p[0] = Let(assignments=p[2], expr=p[4])
+    elif first_token == 'NEW':
+        p[0] = New(type=p[2])
+    elif first_token in ['ISVOID', 'INT_COMPLEMENT', 'NOT']:
+        p[0] = UnaryOperation(operator=p[1], right=p[2])
+    elif first_token in ['{', '(']:
+        p[0] = p[2]
+    elif first_token in ['INTEGER', 'STRING', 'BOOL']:
+        p[0] = p[1]
 
 def p_empty(p):
     """empty :"""

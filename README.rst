@@ -34,7 +34,7 @@ an example, parsing ``example/complex2.cl`` currently results in code like this:
                 Method(
                     name='copy',
                     type='SELF_TYPE',
-                    params=(),
+                    formals=(),
                     expr='self'
                 ),
             )
@@ -94,7 +94,7 @@ an example, parsing ``example/complex2.cl`` currently results in code like this:
                 Method(
                     name='main',
                     type='Sally',
-                    params=(),
+                    formals=(),
                     expr='x'
                 )
             )
