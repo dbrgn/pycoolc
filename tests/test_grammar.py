@@ -61,7 +61,7 @@ class TestClass:
         out = self.parse(src)
         expected = ast.Type(
             name='Spam', inherits=None, features=(
-                ast.Attribute(name=ast.Ident('nine'), type='Int', expr=None),
+                ast.Attribute(ident=ast.Ident('nine'), type='Int', expr=None),
             )
         )
         assert_equal(out, expected)
@@ -71,8 +71,8 @@ class TestClass:
         out = self.parse(src)
         expected = ast.Type(
             name='Spam', inherits=None, features=(
-                ast.Attribute(name=ast.Ident('nine'), type='Int', expr=None),
-                ast.Attribute(name=ast.Ident('name'), type='Str', expr=None),
+                ast.Attribute(ident=ast.Ident('nine'), type='Int', expr=None),
+                ast.Attribute(ident=ast.Ident('name'), type='Str', expr=None),
             )
         )
         assert_equal(out, expected)
@@ -90,35 +90,35 @@ class TestFeature:
     def test_attribute_simple(self):
         src = 'spam : Ham;'
         out = yacc.parse(src)
-        expected = ast.Attribute(name=ast.Ident('spam'), type='Ham', expr=None)
+        expected = ast.Attribute(ident=ast.Ident('spam'), type='Ham', expr=None)
         assert_equal(out, expected)
 
     def test_attribute_expr(self):
         src = 'spam : Ham <- "bacon";'
         out = yacc.parse(src)
-        expected = ast.Attribute(name=ast.Ident('spam'), type='Ham', expr="bacon")
+        expected = ast.Attribute(ident=ast.Ident('spam'), type='Ham', expr="bacon")
         assert_equal(out, expected)
 
     def test_method_simple(self):
         src = 'spam() : Ham { 42 };'
         out = yacc.parse(src)
-        expected = ast.Method(name=ast.Ident('spam'), type='Ham', formals=(), expr=42)
+        expected = ast.Method(ident=ast.Ident('spam'), type='Ham', formals=(), expr=42)
         assert_equal(out, expected)
 
     def test_method_formal(self):
         src = 'spam(bacon : Egg) : Ham { 42 };'
         out = yacc.parse(src)
-        expected = ast.Method(name=ast.Ident('spam'), type='Ham', expr=42, formals=(
-            ast.Formal(name=ast.Ident('bacon'), type='Egg'),
+        expected = ast.Method(ident=ast.Ident('spam'), type='Ham', expr=42, formals=(
+            ast.Formal(ident=ast.Ident('bacon'), type='Egg'),
         ))
         assert_equal(out, expected)
 
     def test_method_formals(self):
         src = 'spam(bacon : Egg, sausage : Meat) : Ham { 42 };'
         out = yacc.parse(src)
-        expected = ast.Method(name=ast.Ident('spam'), type='Ham', expr=42, formals=(
-            ast.Formal(name=ast.Ident('bacon'), type='Egg'),
-            ast.Formal(name=ast.Ident('sausage'), type='Meat'),
+        expected = ast.Method(ident=ast.Ident('spam'), type='Ham', expr=42, formals=(
+            ast.Formal(ident=ast.Ident('bacon'), type='Egg'),
+            ast.Formal(ident=ast.Ident('sausage'), type='Meat'),
         ))
         assert_equal(out, expected)
 
@@ -134,7 +134,7 @@ class TestFormal:
     def test(self):
         src = 'spam : Ham'
         out = yacc.parse(src)
-        expected = ast.Formal(name=ast.Ident('spam'), type='Ham')
+        expected = ast.Formal(ident=ast.Ident('spam'), type='Ham')
         assert_equal(out, expected)
 
 
@@ -173,7 +173,7 @@ class TestExpression:
     def test_assignment(self):
         src = 'bacon <- "eggs"'
         out = yacc.parse(src)
-        expected = ast.Assignment(name=ast.Ident('bacon'), expr='eggs')
+        expected = ast.Assignment(ident=ast.Ident('bacon'), expr='eggs')
         assert_equal(out, expected)
 
     def test_method_call_simple(self):
@@ -181,7 +181,7 @@ class TestExpression:
         out = yacc.parse(src)
         expected = ast.MethodCall(object=ast.Ident('pub'), targettype=None,
             method=ast.FunctionCall(
-                name=ast.Ident('show_vikings'), params=()
+                ident=ast.Ident('show_vikings'), params=()
             )
         )
         assert_equal(out, expected)
@@ -191,7 +191,7 @@ class TestExpression:
         out = yacc.parse(src)
         expected = ast.MethodCall(object=ast.Ident('pub'), targettype=None,
             method=ast.FunctionCall(
-                name=ast.Ident('show_vikings'), params=(42,)
+                ident=ast.Ident('show_vikings'), params=(42,)
             )
         )
         assert_equal(out, expected)
@@ -201,7 +201,7 @@ class TestExpression:
         out = yacc.parse(src)
         expected = ast.MethodCall(object=ast.Ident('pub'), targettype=None,
             method=ast.FunctionCall(
-                name=ast.Ident('show_vikings'), params=(42, 'spam')
+                ident=ast.Ident('show_vikings'), params=(42, 'spam')
             )
         )
         assert_equal(out, expected)
@@ -211,7 +211,7 @@ class TestExpression:
         out = yacc.parse(src)
         expected = ast.MethodCall(object=ast.Ident('pub'), targettype='Place',
             method=ast.FunctionCall(
-                name=ast.Ident('has_spam'), params=()
+                ident=ast.Ident('has_spam'), params=()
             )
         )
         assert_equal(out, expected)
@@ -219,19 +219,19 @@ class TestExpression:
     def test_function_call_simple(self):
         src = 'order_spam()'
         out = yacc.parse(src)
-        expected = method=ast.FunctionCall(name=ast.Ident('order_spam'), params=())
+        expected = method=ast.FunctionCall(ident=ast.Ident('order_spam'), params=())
         assert_equal(out, expected)
 
     def test_function_call_arg(self):
         src = 'order_spam(42)'
         out = yacc.parse(src)
-        expected = method=ast.FunctionCall(name=ast.Ident('order_spam'), params=(42,))
+        expected = method=ast.FunctionCall(ident=ast.Ident('order_spam'), params=(42,))
         assert_equal(out, expected)
 
     def test_function_call_args(self):
         src = 'order_spam(42, "spam")'
         out = yacc.parse(src)
-        expected = method=ast.FunctionCall(name=ast.Ident('order_spam'), params=(42, "spam"))
+        expected = method=ast.FunctionCall(ident=ast.Ident('order_spam'), params=(42, "spam"))
         assert_equal(out, expected)
 
     def test_if(self):
@@ -256,7 +256,7 @@ class TestExpression:
         src = 'let x : Int in x'
         out = yacc.parse(src)
         expected = ast.Let(assignments=(
-            ast.Attribute(name=ast.Ident('x'), type='Int', expr=None),
+            ast.Attribute(ident=ast.Ident('x'), type='Int', expr=None),
         ), expr=ast.Ident('x'))
         assert_equal(out, expected)
 
@@ -264,7 +264,7 @@ class TestExpression:
         src = 'let x : Int <- 42 in x'
         out = yacc.parse(src)
         expected = ast.Let(assignments=(
-            ast.Attribute(name=ast.Ident('x'), type='Int', expr=42),
+            ast.Attribute(ident=ast.Ident('x'), type='Int', expr=42),
         ), expr=ast.Ident('x'))
         assert_equal(out, expected)
 
@@ -272,8 +272,8 @@ class TestExpression:
         src = 'let x : Int <- 42, y : Bool <- false in x'
         out = yacc.parse(src)
         expected = ast.Let(assignments=(
-            ast.Attribute(name=ast.Ident('x'), type='Int', expr=42),
-            ast.Attribute(name=ast.Ident('y'), type='Bool', expr=False),
+            ast.Attribute(ident=ast.Ident('x'), type='Int', expr=42),
+            ast.Attribute(ident=ast.Ident('y'), type='Bool', expr=False),
         ), expr=ast.Ident('x'))
         assert_equal(out, expected)
 
@@ -281,7 +281,7 @@ class TestExpression:
         src = 'case "spam" of x : Str => true; esac'
         out = yacc.parse(src)
         expected = ast.Case(expr='spam', typeactions=(
-            ast.TypeAction(name=ast.Ident('x'), type='Str', expr=True),
+            ast.TypeAction(ident=ast.Ident('x'), type='Str', expr=True),
         ))
         assert_equal(out, expected)
 
@@ -289,8 +289,8 @@ class TestExpression:
         src = 'case "spam" of x : Str => true; y : Object => false; esac'
         out = yacc.parse(src)
         expected = ast.Case(expr='spam', typeactions=(
-            ast.TypeAction(name=ast.Ident('x'), type='Str', expr=True),
-            ast.TypeAction(name=ast.Ident('y'), type='Object', expr=False),
+            ast.TypeAction(ident=ast.Ident('x'), type='Str', expr=True),
+            ast.TypeAction(ident=ast.Ident('y'), type='Object', expr=False),
         ))
         assert_equal(out, expected)
 
