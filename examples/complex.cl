@@ -11,5 +11,5 @@ class Main {
 
     (* main function,
        type Sally *)
-    main() : Sally { x };
+    main(foo : Int, bar : Int) : Sally { x };
 };

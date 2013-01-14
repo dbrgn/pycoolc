@@ -3,7 +3,7 @@ import ply.lex as lex
 
 ###### TOKEN LISTS ######
 
-literals = ['+', '-', '*', '/', ':', ';', '(', ')', '{', '}', '@', '.']
+literals = ['+', '-', '*', '/', ':', ';', '(', ')', '{', '}', '@', '.', ',']
 
 reserved = {
     'class': 'CLASS',
