@@ -15,7 +15,7 @@ precedence = (
     ('left', '*', '/'),
     ('right', 'ISVOID'),
     ('right', 'INT_COMPLEMENT'),
-    #('right', '@'),
+    ('left', '@'),
     ('left', '.'),
 )
 
@@ -69,7 +69,7 @@ def p_feature(p):
     """feature : ID '(' formals_opt ')' ':' TYPE '{' expr '}' ';'
                | attr_def ';'"""
     if len(p) == 11:
-        p[0] = ast.Method(name=p[1], type=p[6], formals=p[3], expr=p[8])
+        p[0] = ast.Method(name=ast.Ident(p[1]), type=p[6], formals=p[3], expr=p[8])
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -87,7 +87,7 @@ def p_attr_defs(p):
 
 def p_attr_def(p):
     """attr_def : ID ':' TYPE assign_opt"""
-    p[0] = ast.Attribute(name=p[1], type=p[3], expr=p[4])
+    p[0] = ast.Attribute(name=ast.Ident(p[1]), type=p[3], expr=p[4])
 
 def p_assign_opt(p):
     """assign_opt : assign
@@ -118,7 +118,7 @@ def p_formals(p):
 
 def p_formal(p):
     """formal : ID ':' TYPE"""
-    p[0] = ast.Formal(name=p[1], type=p[3])
+    p[0] = ast.Formal(name=ast.Ident(p[1]), type=p[3])
 
 def p_params_opt(p):
     """params_opt : params
@@ -156,7 +156,7 @@ def p_typeactions(p):
     """typeactions : typeaction
                    | typeaction typeactions"""
     if len(p) == 2:
-        p[0] == (p[1],)
+        p[0] = (p[1],)
     elif len(p) == 3:
         p[0] = (p[1],) + p[2]
     else:
@@ -164,12 +164,25 @@ def p_typeactions(p):
 
 def p_typeaction(p):
     """typeaction : ID ':' TYPE ACTION expr ';'"""
-    p[0] = ast.Case(name=p[1], type=p[3], action=p[5])
+    p[0] = ast.TypeAction(name=ast.Ident(p[1]), type=p[3], expr=p[5])
+
+def p_function_call(p):
+    """function_call : ID '(' params_opt ')'"""
+    p[0] = ast.FunctionCall(name=ast.Ident(p[1]), params=p[3])
+
+def p_targettype_opt(p):
+    """targettype_opt : targettype
+                      | empty"""
+    p[0] = p[1]
+
+def p_targettype(p):
+    """targettype : '@' TYPE"""
+    p[0] = p[2]
 
 def p_expr(p):
     """expr : ID assign
-            | expr '.' ID '(' params_opt ')'
-            | ID '(' params_opt ')'
+            | expr targettype_opt '.' function_call
+            | function_call
             | IF expr THEN expr ELSE expr FI
             | WHILE expr LOOP expr POOL
             | LET attr_defs IN expr
@@ -198,20 +211,26 @@ def p_expr(p):
 
     if first_token == 'ID':
         if second_token is None:
-            p[0] = p[1]
+            p[0] = ast.Ident(p[1])
         elif second_token == '(':
             p[0] = ast.FunctionCall(function=p[1], params=p[3])
         elif second_token == 'assign':
-            p[0] = ast.Assignment(name=p[1], expr=p[2])
+            p[0] = ast.Assignment(name=ast.Ident(p[1]), expr=p[2])
     elif first_token == 'expr':
         if len(p) == 4 and third_token == 'expr':
             p[0] = ast.BinaryOperation(operator=p[2], left=p[1], right=p[3])
-        elif second_token == '.':
-            p[0] = ast.MethodCall(object=p[1], method=p[3], params=p[5])
+        elif third_token == '.':
+            p[0] = ast.MethodCall(object=p[1], targettype=p[2], method=p[4])
+    elif first_token == 'function_call':
+        p[0] = p[1]
     elif first_token == 'IF':
         p[0] = ast.If(condition=p[2], true=p[4], false=p[6])
+    elif first_token == 'WHILE':
+        p[0] = ast.While(condition=p[2], action=p[4])
     elif first_token == 'LET':
         p[0] = ast.Let(assignments=p[2], expr=p[4])
+    elif first_token == 'CASE':
+        p[0] = ast.Case(expr=p[2], typeactions=p[4])
     elif first_token == 'NEW':
         p[0] = ast.New(type=p[2])
     elif first_token in ['ISVOID', 'INT_COMPLEMENT', 'NOT']:

@@ -40,6 +40,33 @@ tokens = [
 
 ###### TOKEN RULES ######
 
+# Primitive data types
+
+def t_INTEGER(t):
+    r'[0-9]+'
+    t.value = int(t.value)
+    return t
+
+def t_STRING(t):
+    r'"[^\0\n"]*(\\\n[^\0\n"]*)*"'
+    t.value = t.value[1:-1]
+    return t
+
+def t_BOOL(t):
+    r'true|false'
+    t.value = True if t.value == 'true' else False
+    return t
+
+def t_COMMENT(t):
+    r'--[^\n]+\n|\(\*[^(\*\))]+\*\)'
+    pass  # Discard comments
+
+# Other tokens with precedence before TYPE and ID
+
+def t_NOT(t):
+    r'[nN][oO][tT]'
+    return t
+
 # Identifiers
 
 def t_TYPE(t):
@@ -58,31 +85,10 @@ t_LESS = r'<'
 t_LESSEQUAL = r'<='
 t_EQUAL = r'='
 t_INT_COMPLEMENT = r'~'
-t_NOT = r'[nN][oO][tT]'
 
 # Special keywords
 
 t_ACTION = r'=>'
-
-# Primitive data types
-
-def t_INTEGER(t):
-    r'[0-9]+'
-    t.value = int(t.value)
-    return t
-
-def t_STRING(t):
-    r'"[^\0\n]*(\\\n[^\0\n]*)*"'
-    t.value = t.value[1:-1]
-    return t
-
-def t_BOOL(t):
-    r'true|false'
-    return True if t.value == 'true' else False
-
-def t_COMMENT(t):
-    r'--[^\n]+\n|\(\*[^(\*\))]+\*\)'
-    pass  # Discard comments
 
 
 ###### SPECIAL RULES ######
