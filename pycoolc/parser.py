@@ -1,25 +1,9 @@
-from collections import namedtuple
 import ply.yacc as yacc
 from . import lexer
+from . import ast
 from .utils import print_ast
+
 tokens = lexer.tokens
-
-# AST namedtuples
-
-Type = namedtuple('Type', 'name inherits features')
-Method = namedtuple('Method', 'name type formals expr')
-Block = namedtuple('Block', 'elements')
-Attribute = namedtuple('Attribute', 'name type expr')
-Let = namedtuple('Let', 'assignments expr')
-If = namedtuple('If', 'condition true false')
-Case = namedtuple('Case', 'name type action')
-Assignment = namedtuple('Assignment', 'name expr')
-Formal = namedtuple('Formal', 'name type')
-New = namedtuple('New', 'type')
-MethodCall = namedtuple('MethodCall', 'object method params')
-FunctionCall = namedtuple('FunctionCall', 'function params')
-BinaryOperation = namedtuple('BinaryOperation', 'operator left right')
-UnaryOperation = namedtuple('UnaryOperation', 'operator right')
 
 # Grammar definitions in BNF form
 
@@ -51,7 +35,7 @@ def p_classes(p):
 
 def p_class(p):
     """class : CLASS TYPE inheritance '{' features_opt '}' ';'"""
-    p[0] = Type(name=p[2], inherits=p[3], features=p[5])
+    p[0] = ast.Type(name=p[2], inherits=p[3], features=p[5])
 
 def p_inheritance(p):
     """inheritance : INHERITS TYPE
@@ -85,7 +69,7 @@ def p_feature(p):
     """feature : ID '(' formals_opt ')' ':' TYPE '{' expr '}' ';'
                | attr_def ';'"""
     if len(p) == 11:
-        p[0] = Method(name=p[1], type=p[6], formals=p[3], expr=p[8])
+        p[0] = ast.Method(name=p[1], type=p[6], formals=p[3], expr=p[8])
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -103,7 +87,7 @@ def p_attr_defs(p):
 
 def p_attr_def(p):
     """attr_def : ID ':' TYPE assign_opt"""
-    p[0] = Attribute(name=p[1], type=p[3], expr=p[4])
+    p[0] = ast.Attribute(name=p[1], type=p[3], expr=p[4])
 
 def p_assign_opt(p):
     """assign_opt : assign
@@ -134,7 +118,7 @@ def p_formals(p):
 
 def p_formal(p):
     """formal : ID ':' TYPE"""
-    p[0] = Formal(name=p[1], type=p[3])
+    p[0] = ast.Formal(name=p[1], type=p[3])
 
 def p_params_opt(p):
     """params_opt : params
@@ -156,7 +140,7 @@ def p_params(p):
 
 def p_block(p):
     """block : blockelements"""
-    p[0] = Block(elements=p[1])
+    p[0] = ast.Block(elements=p[1])
 
 def p_blockelements(p):
     """blockelements : expr ';'
@@ -180,7 +164,7 @@ def p_typeactions(p):
 
 def p_typeaction(p):
     """typeaction : ID ':' TYPE ACTION expr ';'"""
-    p[0] = Case(name=p[1], type=p[3], action=p[5])
+    p[0] = ast.Case(name=p[1], type=p[3], action=p[5])
 
 def p_expr(p):
     """expr : ID assign
@@ -208,7 +192,6 @@ def p_expr(p):
             | STRING
             | BOOL
     """
-    # todo LET and second expr
     first_token = p.slice[1].type
     second_token = p.slice[2].type if len(p) > 2 else None
     third_token = p.slice[3].type if len(p) > 3 else None
@@ -217,22 +200,22 @@ def p_expr(p):
         if second_token is None:
             p[0] = p[1]
         elif second_token == '(':
-            p[0] = FunctionCall(function=p[1], params=p[3])
+            p[0] = ast.FunctionCall(function=p[1], params=p[3])
         elif second_token == 'assign':
-            p[0] = Assignment(name=p[1], expr=p[2])
+            p[0] = ast.Assignment(name=p[1], expr=p[2])
     elif first_token == 'expr':
         if len(p) == 4 and third_token == 'expr':
-            p[0] = BinaryOperation(operator=p[2], left=p[1], right=p[3])
+            p[0] = ast.BinaryOperation(operator=p[2], left=p[1], right=p[3])
         elif second_token == '.':
-            p[0] = MethodCall(object=p[1], method=p[3], params=p[5])
+            p[0] = ast.MethodCall(object=p[1], method=p[3], params=p[5])
     elif first_token == 'IF':
-        p[0] = If(condition=p[2], true=p[4], false=p[6])
+        p[0] = ast.If(condition=p[2], true=p[4], false=p[6])
     elif first_token == 'LET':
-        p[0] = Let(assignments=p[2], expr=p[4])
+        p[0] = ast.Let(assignments=p[2], expr=p[4])
     elif first_token == 'NEW':
-        p[0] = New(type=p[2])
+        p[0] = ast.New(type=p[2])
     elif first_token in ['ISVOID', 'INT_COMPLEMENT', 'NOT']:
-        p[0] = UnaryOperation(operator=p[1], right=p[2])
+        p[0] = ast.UnaryOperation(operator=p[1], right=p[2])
     elif first_token in ['{', '(']:
         p[0] = p[2]
     elif first_token in ['INTEGER', 'STRING', 'BOOL']:
