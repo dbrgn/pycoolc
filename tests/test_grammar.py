@@ -249,7 +249,7 @@ class TestExpression:
     def test_block(self):
         src = '{ 1; "bacon"; 3; }'
         out = yacc.parse(src)
-        expected = ast.Block(elements=(1, 'bacon', 3))
+        expected = ast.Block((1, 'bacon', 3))
         assert_equal(out, expected)
 
     def test_let_basic(self):
@@ -297,7 +297,7 @@ class TestExpression:
     def test_new(self):
         src = 'new Bacon'
         out = yacc.parse(src)
-        expected = ast.New(type='Bacon')
+        expected = ast.New('Bacon')
         assert_equal(out, expected)
 
     def test_isvoid(self):

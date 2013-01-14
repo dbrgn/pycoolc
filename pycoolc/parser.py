@@ -140,7 +140,7 @@ def p_params(p):
 
 def p_block(p):
     """block : blockelements"""
-    p[0] = ast.Block(elements=p[1])
+    p[0] = ast.Block(p[1])
 
 def p_blockelements(p):
     """blockelements : expr ';'
@@ -232,7 +232,7 @@ def p_expr(p):
     elif first_token == 'CASE':
         p[0] = ast.Case(expr=p[2], typeactions=p[4])
     elif first_token == 'NEW':
-        p[0] = ast.New(type=p[2])
+        p[0] = ast.New(p[2])
     elif first_token in ['ISVOID', 'INT_COMPLEMENT', 'NOT']:
         p[0] = ast.UnaryOperation(operator=p[1], right=p[2])
     elif first_token in ['{', '(']:
