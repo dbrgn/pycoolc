@@ -100,5 +100,16 @@ this:
       )
     )
 
+Testing
+-------
+
+Make sure you have installed nose::
+
+    pip install nose
+
+Then just run the nose on the tests directory::
+
+    nosetests tests
+
 .. _cool: http://theory.stanford.edu/~aiken/software/cool/cool.html
 .. _ply: http://www.dabeaz.com/ply/ 
