@@ -69,7 +69,7 @@ def p_feature(p):
     """feature : ID '(' formals_opt ')' ':' TYPE '{' expr '}' ';'
                | attr_def ';'"""
     if len(p) == 11:
-        p[0] = ast.Method(name=ast.Ident(p[1]), type=p[6], formals=p[3], expr=p[8])
+        p[0] = ast.Method(ident=ast.Ident(p[1]), type=p[6], formals=p[3], expr=p[8])
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -87,7 +87,7 @@ def p_attr_defs(p):
 
 def p_attr_def(p):
     """attr_def : ID ':' TYPE assign_opt"""
-    p[0] = ast.Attribute(name=ast.Ident(p[1]), type=p[3], expr=p[4])
+    p[0] = ast.Attribute(ident=ast.Ident(p[1]), type=p[3], expr=p[4])
 
 def p_assign_opt(p):
     """assign_opt : assign
@@ -118,7 +118,7 @@ def p_formals(p):
 
 def p_formal(p):
     """formal : ID ':' TYPE"""
-    p[0] = ast.Formal(name=ast.Ident(p[1]), type=p[3])
+    p[0] = ast.Formal(ident=ast.Ident(p[1]), type=p[3])
 
 def p_params_opt(p):
     """params_opt : params
@@ -164,11 +164,11 @@ def p_typeactions(p):
 
 def p_typeaction(p):
     """typeaction : ID ':' TYPE ACTION expr ';'"""
-    p[0] = ast.TypeAction(name=ast.Ident(p[1]), type=p[3], expr=p[5])
+    p[0] = ast.TypeAction(ident=ast.Ident(p[1]), type=p[3], expr=p[5])
 
 def p_function_call(p):
     """function_call : ID '(' params_opt ')'"""
-    p[0] = ast.FunctionCall(name=ast.Ident(p[1]), params=p[3])
+    p[0] = ast.FunctionCall(ident=ast.Ident(p[1]), params=p[3])
 
 def p_targettype_opt(p):
     """targettype_opt : targettype
@@ -213,9 +213,9 @@ def p_expr(p):
         if second_token is None:
             p[0] = ast.Ident(p[1])
         elif second_token == '(':
-            p[0] = ast.FunctionCall(function=p[1], params=p[3])
+            p[0] = ast.FunctionCall(ident=p[1], params=p[3])
         elif second_token == 'assign':
-            p[0] = ast.Assignment(name=ast.Ident(p[1]), expr=p[2])
+            p[0] = ast.Assignment(ident=ast.Ident(p[1]), expr=p[2])
     elif first_token == 'expr':
         if len(p) == 4 and third_token == 'expr':
             p[0] = ast.BinaryOperation(operator=p[2], left=p[1], right=p[3])
