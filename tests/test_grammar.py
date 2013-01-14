@@ -2,7 +2,7 @@
 This module contains tests for the cool grammar as defined by the `The Cool
 Reference Manual <http://s.dbrgn.ch/4JrI>`__.
 """
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_is
 from pycoolc.parser import *
 
 
@@ -13,7 +13,7 @@ def get_parser(start):
 
 class TestProgram:
     """
-    program ::= [[class;]]+
+    program ::= [[ class; ]]+
     """
 
     def setUp(self):
@@ -38,7 +38,7 @@ class TestProgram:
 
 class TestClass:
     """
-    class ::= class TYPE [inherits TYPE] { [[feature;]]* }
+    class ::= class TYPE [ inherits TYPE ] { [[ feature; ]]* }
     """
 
     def setUp(self):
@@ -80,8 +80,8 @@ class TestClass:
 
 class TestFeature:
     """
-    feature ::= ID( [ formal [[, formal]]* ] ) : TYPE { expr }
-            ::= ID : TYPE [<- expr]
+    feature ::= ID( [ formal [[ , formal ]]* ] ) : TYPE { expr }
+            ::= ID : TYPE [ <- expr ]
     """
 
     def setUp(self):
@@ -136,3 +136,258 @@ class TestFormal:
         out = yacc.parse(src)
         expected = ast.Formal(name='spam', type='Ham')
         assert_equal(out, expected)
+
+
+class TestExpression:
+    """
+    expr ::= ID <- expr
+         ::= expr[@TYPE].ID( [ expr [[ , expr ]]* ] )
+         ::= ID( [ expr [[ , expr ]]* ] )
+         ::= if expr then expr else expr fi
+         ::= while expr loop expr pool
+         ::= { [[ expr; ]]+ }
+         ::= let ID : TYPE [ <- expr ] [[ , ID : TYPE [ <- expr ] ]]* in expr
+         ::= case expr of [[ ID : TYPE => exp; ]]+ esac
+         ::= new TYPE
+         ::= isvoid expr
+         ::= expr + expr
+         ::= expr - expr
+         ::= expr * expr
+         ::= expr / expr
+         ::= ~expr
+         ::= expr < expr
+         ::= expr <= expr
+         ::= expr = expr
+         ::= not expr
+         ::= (expr)
+         ::= ID
+         ::= integer
+         ::= string
+         ::= true
+         ::= false
+    """
+
+    def setUp(self):
+        self.parse = get_parser('expr')
+
+    def test_assignment(self):
+        src = 'bacon <- "eggs"'
+        out = yacc.parse(src)
+        expected = ast.Assignment(name='bacon', expr='eggs')
+        assert_equal(out, expected)
+
+    def test_method_call_simple(self):
+        src = 'pub.show_vikings()'
+        out = yacc.parse(src)
+        expected = ast.MethodCall(object=ast.Ident(name='pub'), targettype=None,
+            method=ast.FunctionCall(
+                name=ast.Ident('show_vikings'), params=()
+            )
+        )
+        assert_equal(out, expected)
+
+    def test_method_call_arg(self):
+        src = 'pub.show_vikings(42)'
+        out = yacc.parse(src)
+        expected = ast.MethodCall(object=ast.Ident(name='pub'), targettype=None,
+            method=ast.FunctionCall(
+                name=ast.Ident('show_vikings'), params=(42,)
+            )
+        )
+        assert_equal(out, expected)
+
+    def test_method_call_args(self):
+        src = 'pub.show_vikings(42, "spam")'
+        out = yacc.parse(src)
+        expected = ast.MethodCall(object=ast.Ident(name='pub'), targettype=None,
+            method=ast.FunctionCall(
+                name=ast.Ident('show_vikings'), params=(42, 'spam')
+            )
+        )
+        assert_equal(out, expected)
+
+    def test_method_call_targettype(self):
+        src = 'pub@Place.has_spam()'
+        out = yacc.parse(src)
+        expected = ast.MethodCall(object=ast.Ident(name='pub'), targettype='Place',
+            method=ast.FunctionCall(
+                name=ast.Ident('has_spam'), params=()
+            )
+        )
+        assert_equal(out, expected)
+
+    def test_function_call_simple(self):
+        src = 'order_spam()'
+        out = yacc.parse(src)
+        expected = method=ast.FunctionCall(name=ast.Ident('order_spam'), params=())
+        assert_equal(out, expected)
+
+    def test_function_call_arg(self):
+        src = 'order_spam(42)'
+        out = yacc.parse(src)
+        expected = method=ast.FunctionCall(name=ast.Ident('order_spam'), params=(42,))
+        assert_equal(out, expected)
+
+    def test_function_call_args(self):
+        src = 'order_spam(42, "spam")'
+        out = yacc.parse(src)
+        expected = method=ast.FunctionCall(name=ast.Ident('order_spam'), params=(42, "spam"))
+        assert_equal(out, expected)
+
+    def test_if(self):
+        src = 'if true then 42 else 23 fi'
+        out = yacc.parse(src)
+        expected = ast.If(condition=True, true=42, false=23)
+        assert_equal(out, expected)
+
+    def test_while(self):
+        src = 'while true loop "spam" pool'
+        out = yacc.parse(src)
+        expected = ast.While(condition=True, action='spam')
+        assert_equal(out, expected)
+
+    def test_block(self):
+        src = '{{ 1; "bacon"; 3; }}'
+        out = yacc.parse(src)
+        expected = ast.Block(elements=(1, 'bacon', 3))
+        assert_equal(out, expected)
+
+    def test_let_basic(self):
+        src = 'let x : Int in x'
+        out = yacc.parse(src)
+        expected = ast.Let(assignments=(
+            ast.Attribute(name='x', type='Int', expr=None),
+        ), expr=ast.Ident(name='x'))
+        assert_equal(out, expected)
+
+    def test_let_single(self):
+        src = 'let x : Int <- 42 in x'
+        out = yacc.parse(src)
+        expected = ast.Let(assignments=(
+            ast.Attribute(name='x', type='Int', expr=42),
+        ), expr=ast.Ident(name='x'))
+        assert_equal(out, expected)
+
+    def test_let_multiple(self):
+        src = 'let x : Int <- 42, y : Bool <- false in x'
+        out = yacc.parse(src)
+        expected = ast.Let(assignments=(
+            ast.Attribute(name='x', type='Int', expr=42),
+            ast.Attribute(name='y', type='Bol', expr=False),
+        ), expr=ast.Ident(name='x'))
+        assert_equal(out, expected)
+
+    def test_case_single(self):
+        src = 'case "spam" of x : Str => true esac'
+        out = yacc.parse(src)
+        expected = ast.Case(name='spam', typeactions=(
+            ast.TypeAction(name='x', type='Str', action=True),
+        ))
+        assert_equal(out, expected)
+
+    def test_case_multiple(self):
+        src = 'case "spam" of x : Str => true, y : Object => false esac'
+        out = yacc.parse(src)
+        expected = ast.Case(name='spam', typeactions=(
+            ast.TypeAction(name='x', type='Str', action=True),
+            ast.TypeAction(name='y', type='Object', action=False),
+        ))
+        assert_equal(out, expected)
+
+    def test_new(self):
+        src = 'new Bacon'
+        out = yacc.parse(src)
+        expected = ast.New(type='Bacon')
+        assert_equal(out, expected)
+
+    def test_isvoid(self):
+        src = 'isvoid viking'
+        out = yacc.parse(src)
+        expected = ast.UnaryOperation(operator='isvoid', right=ast.Ident('viking'))
+        assert_equal(out, expected)
+    
+    def test_plus(self):
+        src = '"hi" + " there"'
+        out = yacc.parse(src)
+        expected = ast.BinaryOperation(operator='+', left='hi', right=' there')
+        assert_equal(out, expected)
+
+    def test_minus(self):
+        src = '44 - 2'
+        out = yacc.parse(src)
+        expected = ast.BinaryOperation(operator='-', left=44, right=2)
+        assert_equal(out, expected)
+
+    def test_times(self):
+        src = '21 * 2'
+        out = yacc.parse(src)
+        expected = ast.BinaryOperation(operator='*', left=21, right=2)
+        assert_equal(out, expected)
+
+    def test_divided(self):
+        src = '84 / 2'
+        out = yacc.parse(src)
+        expected = ast.BinaryOperation(operator='/', left=84, right=2)
+        assert_equal(out, expected)
+
+    def test_int_complement(self):
+        src = '~42'
+        out = yacc.parse(src)
+        expected = ast.UnaryOperation(operator='~', right=42)
+        assert_equal(out, expected)
+
+    def test_less(self):
+        src = '40 < 42'
+        out = yacc.parse(src)
+        expected = ast.BinaryOperation(operator='<', left=40, right=42)
+        assert_equal(out, expected)
+
+    def test_less_or_equal(self):
+        src = '42 <= fourtytwo'
+        out = yacc.parse(src)
+        expected = ast.BinaryOperation(operator='<=', left=42, right=ast.Ident(name='fourtytwo'))
+        assert_equal(out, expected)
+
+    def test_equal(self):
+        src = '='
+        out = yacc.parse(src)
+        expected = ast.BinaryOperation(operator='=', left=4, right=2)
+        assert_equal(out, expected)
+
+    def test_not(self):
+        src = 'not true'
+        out = yacc.parse(src)
+        expected = ast.UnaryOperation(operator='not', right=True)
+        assert_equal(out, expected)
+
+    def test_parens(self):
+        src = '(30 + 12)'
+        out = yacc.parse(src)
+        expected = ast.BinaryOperation(operator='+', left=30, right=12)
+        assert_equal(out, expected)
+
+    def test_id(self):
+        src = 'my_ham'
+        out = yacc.parse(src)
+        expected = ast.Ident(name='my_ham')
+        assert_equal(out, expected)
+
+    def test_integer(self):
+        src = '42'
+        out = yacc.parse(src)
+        assert_equal(out, 42)
+
+    def test_string(self):
+        src = '"spam"'
+        out = yacc.parse(src)
+        assert_equal(out, 'spam')
+
+    def test_true(self):
+        src = 'true'
+        out = yacc.parse(src)
+        assert_is(out, True)
+
+    def test_false(self):
+        src = 'false'
+        out = yacc.parse(src)
+        assert_is(out, False)
