@@ -1,6 +1,10 @@
 pycoolc
 =======
 
+.. image:: https://secure.travis-ci.org/dbrgn/pycoolc.png?branch=master
+    :alt: Build status
+    :target: http://travis-ci.org/dbrgn/pycoolc
+
 A `cool`_ compiler written in Python 3 using `PLY`_.
 
 Development status: Alpha, not usable yet.
