@@ -401,8 +401,8 @@ class TestComments:
     def test(self):
         src = """
         -- The main class
-        class Main {
-            -- Nothing here to see.
+        class Main { (* Nothing here
+            to see. *)
         };
         """
         out = self.parse(src)
