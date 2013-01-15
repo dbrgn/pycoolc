@@ -7,9 +7,23 @@ pycoolc
 
 A `cool`_ compiler written in Python 3 using `PLY`_.
 
-Development status: Alpha, not usable yet.
+Cool reference manual: `http://s.dbrgn.ch/4JrI <http://s.dbrgn.ch/4JrI>`__ (PDF).
 
-License: GPLv3.
+
+Project status
+--------------
+
+Already implemented:
+
+* Lexer
+* Parser
+* AST generation
+
+Not yet done:
+
+* Code generation
+* Optimizations
+
 
 Usage
 -----
@@ -21,6 +35,15 @@ Run lexer::
 Run parser::
 
     python3 -m pycoolc.parser path/to/sourcefile.cl
+
+Use parser in your code:
+
+.. sourcecode:: python
+
+    >>> from pycoolc.parser import yacc
+    >>> yacc.parse('class Main {};')
+    (Type(name='Main', inherits=None, features=()),)
+
 
 AST
 ---
@@ -104,6 +127,7 @@ this:
       )
     )
 
+
 Testing
 -------
 
@@ -114,6 +138,14 @@ Make sure you have installed nose::
 Then just run the nose on the tests directory::
 
     nosetests tests
+
+
+License
+-------
+
+License: GPLv3, see ``LICENSE`` file.
+
+
 
 .. _cool: http://theory.stanford.edu/~aiken/software/cool/cool.html
 .. _ply: http://www.dabeaz.com/ply/ 
