@@ -212,8 +212,6 @@ def p_expr(p):
     if first_token == 'ID':
         if second_token is None:
             p[0] = ast.Ident(p[1])
-        elif second_token == '(':
-            p[0] = ast.FunctionCall(ident=p[1], params=p[3])
         elif second_token == 'assign':
             p[0] = ast.Assignment(ident=ast.Ident(p[1]), expr=p[2])
     elif first_token == 'expr':
@@ -250,6 +248,7 @@ def p_error(p):
 
 # Create parser
 yacc.yacc()
+
 
 if __name__ == '__main__':
 

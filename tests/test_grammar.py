@@ -391,3 +391,19 @@ class TestExpression:
         src = 'false'
         out = yacc.parse(src)
         assert_is(out, False)
+
+
+class TestComments:
+
+    def setUp(self):
+        self.parse = get_parser('program')
+
+    def test(self):
+        src = """
+        -- The main class
+        class Main {
+            -- Nothing here to see.
+        };
+        """
+        out = self.parse(src)
+        assert_equal(out, (ast.Type(name='Main', inherits=None, features=()),))
